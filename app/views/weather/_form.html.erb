@@ -1,0 +1,44 @@
+<%= form_with(model: weather) do |form| %>
+  <% if weather.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(weather.errors.count, "error") %> occurred while fetching the weather:</h2>
+
+      <ul>
+        <% weather.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :address, "Address (optional): " %>
+    <%= form.text_field :address %>
+    <%= form.label :zip, "Zip: " %>
+    <%= form.text_field :zip %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
+
+<script>
+  <%# validate zip, disable submit, update result... (zip in params?) %>
+  $(() => {
+    $('submit').click(() => {
+
+
+    })
+
+    fetch('/weather', {
+      type: 'post',
+      dataType: 'json',
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+    })
+    .catch(error => console.error('Error:', error))
+  })
+</script>
