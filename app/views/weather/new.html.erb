@@ -1,6 +1,95 @@
 <h1>Check Your Local Forecast</h1>
 
-<%= render "form", weather: @weather %>
+<%= render "form" %>
 
 <br>
 
+<div id="now">
+
+</div>
+
+<table id="forecast">
+  <thead>
+    <tr>
+      <th>Day</th>
+      <th>High</th>
+      <th>Low</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+
+<script>
+  $(() => {
+    $('input[type=submit]').click((evt) => {
+      evt.preventDefault()
+
+      const zip = $('input#zip').val()
+
+      <%# verify 5 digits before submit %>
+      if (/^\d{5}$/.test(zip)) {
+        $('input[type=submit]').disabled = true
+        $('#errors').hide()
+        fetchWeather(zip)
+      } else {
+        updateError('Zipcode must be 5 digits.')
+      }
+    })
+  })
+
+  const fetchWeather = (zip) => {
+    fetch('/weather', {
+      method: 'post',
+      body: JSON.stringify({ zip: zip }),
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      $('input[type=submit]').disabled = false
+
+      if (data.error !== undefined) {
+        updateError(data.error)
+      } else {
+        $('#forecast tbody').empty()
+        weatherNow(data.now)
+        forecastTable(data.daily)
+      }
+    })
+    .catch(error => {
+      $('input[type=submit]').disabled = false
+      updateError(error)
+    })
+  }
+
+  const forecastTable = (daily) => {
+    $('#forecast').show()
+
+    Object.keys(daily).forEach(day => {
+      const newRow = `
+        <tr>
+          <td>${day}</td>
+          <td>${daily[day].high}</td>
+          <td>${daily[day].low}</td>
+        </tr>
+      `
+
+      $('#forecast tbody').append(newRow)
+    })
+  }
+
+  const weatherNow = (now) => {
+    const temp = `<h2> It is ${now.temp} F and ${now.description}</h2>`
+    $('#now').html(temp)
+  }
+
+  const updateError = (err) => {
+    $('#errors').text(err)
+    $('#errors').show()
+  }
+</script>

@@ -27,7 +27,7 @@ Things you may want to cover:
 To run:
 clone repo
 bundle install
-X-- rails db:migrate --X
+rails dev:cache
 rails s
 
 redis?...
@@ -40,7 +40,8 @@ REDIS MOCKING...
 
 DOCUMENTATION HERE
 
-AJAX DOM EDITING???
+CACHING: show when used.
+
 
 
 

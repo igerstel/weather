@@ -1,8 +1,8 @@
-class WeatherApi < Weather
+class Weather::WeatherApi < Weather
   KEY = Rails.application.credentials.weather_api
   URL = "http://api.weatherapi.com/v1/forecast.json"
 
-  def get_forecast(zip)
+  def self.call(zip)
     # get temperature in Fahrenheit: units=imperial
     uri = URI.parse(URL + "?q=#{zip}&key=#{KEY}&days=5&aqi=no&alerts=no")
     resp = JSON(Net::HTTP.get(uri))
@@ -12,13 +12,13 @@ class WeatherApi < Weather
       return { error: resp['error']['message'] }, resp['error']['code']
     end
 
-    # 5-day forecast
+    # now + 5-day forecast
     forecast = package_forecast(resp)
 
     return forecast, 200
   end
 
-  def package_forecast(data)
+  def self.package_forecast(data)
     forecast = { 'now' => {}, 'daily' => {} }
 
     forecast['now'] = package_current_forecast(data['current'])
@@ -32,17 +32,17 @@ class WeatherApi < Weather
     return forecast
   end
 
-  def package_current_forecast(data_point)
+  def self.package_current_forecast(data_point)
     {
-      data_point['temp_f'].to_f.round,
-      data_point['condition']['text'].downcase
+      'temp' => data_point['temp_f'].to_f.round,
+      'description' => data_point['condition']['text'].downcase
     }
   end
 
-  def package_daily_forecast(data_point)
+  def self.package_daily_forecast(data_point)
     {
-      'high' => data_point['maxtemp_f'].to_f.round,
-      'low' => data_point['mintemp_f'].to_f.round
+      'high' => data_point['day']['maxtemp_f'].to_f.round,
+      'low' => data_point['day']['mintemp_f'].to_f.round
     }
   end
 end

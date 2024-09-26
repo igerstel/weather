@@ -16,6 +16,11 @@ module Localweather
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w(assets tasks))
 
+    # include WeatherService(s)
+    config.autoload_paths += %W(#{config.root}/app/services)
+
+    config.cache_store = :redis_store, 'redis://localhost:6379/0/cache', { expires_in: 30.minutes }
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
