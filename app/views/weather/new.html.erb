@@ -4,9 +4,7 @@
 
 <br>
 
-<div id="now">
-
-</div>
+<div id="now"></div>
 
 <table id="forecast">
   <thead>
@@ -20,6 +18,7 @@
   </tbody>
 </table>
 
+<div id='cached'></div>
 
 <script>
   $(() => {
@@ -59,6 +58,7 @@
         $('#forecast tbody').empty()
         weatherNow(data.now)
         forecastTable(data.daily)
+        showCached(data.cached)
       }
     })
     .catch(error => {
@@ -91,5 +91,13 @@
   const updateError = (err) => {
     $('#errors').text(err)
     $('#errors').show()
+  }
+
+  const showCached = (c) => {
+    if (c === true) {
+      $('#cached').text('loaded from cache')
+    } else {
+      $('#cached').text('')
+    }
   }
 </script>

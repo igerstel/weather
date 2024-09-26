@@ -1,14 +1,28 @@
-class Weather::OpenWeatherMap < Weather
+module Weather::OpenWeatherMap
   KEY = Rails.application.credentials.open_weather_map
   URL = "https://api.openweathermap.org/data/2.5/forecast"
 
+  # Calls OpenWeatherMap API to find forecast info and return JSON + code
+  #
+  # @param [String] 5-digit zipcode
+  # @return [Array<(Hash, Integer)>] An array containing the response body as a hash and the status code as an integer
   def self.call(zip)
     # get temperature in Fahrenheit: units=imperial
     uri = URI.parse(URL + "?zip=#{zip},US&appid=#{KEY}&units=imperial")
-    resp = JSON(Net::HTTP.get(uri))
+
+    # Fail gracefully if the external API is down
+    begin
+      resp = JSON(Net::HTTP.get(uri))
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.error("HTTP error reaching OpenWeatherMap: #{e.message}")
+      return { error: 'Timeout connecting to OpenWeatherMap' }, 408
+    rescue StandardError => e
+      Rails.logger.error "HTTP request failed: #{e.message}"
+      return { error: 'Error from OpenWeatherMap' }, 500
+    end
 
     if resp['cod'].to_i != 200
-      Rails.logger.error("Error reaching OpenWeatherMap: #{resp['cod']}: #{resp['message']}")
+      Rails.logger.error("Error from OpenWeatherMap: #{resp['cod']}: #{resp['message']}")
       return { error: resp['message'] }, (resp['cod'] || 404)
     end
 
@@ -19,6 +33,11 @@ class Weather::OpenWeatherMap < Weather
     return forecast, 200
   end
 
+  # Compiles forecast data (in local timezone)
+  #
+  # @param [Array<Hash>] list of forecast data (5 days, every 3 hours)
+  # @param [Integer] hour shift from UTC to zipcode's local time
+  # @return [Hash] the response body as a hash of current ('now') data and a 5-day ('daily') forecast array
   def self.package_forecast(data, tz)
     forecast = { 'now' => {}, 'daily' => {} }
     forecast['now'] = package_current_forecast(data[0])
